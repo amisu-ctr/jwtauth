@@ -4,8 +4,16 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors');
 const {verify} = require('jsonwebtoken');
 const {hash, compare} = require('bcryptjs')
+
+const {createAccessToken, createRefreshToken} = require('./tokens.js')
+
 const {fakeDB} = require('./fakeDB.js')
 
+//1. Register a user
+//2. Login a user
+//3. Logout a user
+//4. Setup a protected route
+//5. Get a new accesstoken with a refresh token
 
 const server = express()
 
@@ -53,5 +61,27 @@ server.post('/register', async (req, res) => {
         res.send({
             error: `${err.message}`
         })
+    }
+})
+
+// 2. Login a user 
+server.post('/login', async (req, res) => {
+    const {email, password} = req.body;
+
+    try {
+        // 1. Find user in 'Database'. if not  send eror
+        const user = fakeDB.find(user => user.email === email);
+        if(!user) throw new Error("User does not exist");
+        //2.Compare crypted password and see if it checks out. send errir if not
+        const valid = await compare(password, user.password);
+        if (!valid) throw new Error("Password not correct");
+        // 3. Create Refresh- and Accesstoken
+        const Accesstoken = createAccessToken(user.id)
+        const refreshtoken = createRefreshToken(user.id)
+        // 4. Put the refreshtokenin the "database"
+        user.refreshtoken = refreshtoken
+        console.log(fakeDB)
+    } catch(err) {
+
     }
 })
