@@ -5,9 +5,10 @@ const cors = require('cors');
 const {verify} = require('jsonwebtoken');
 const {hash, compare} = require('bcryptjs')
 
-const {createAccessToken, createRefreshToken} = require('./tokens.js')
+const {createAccessToken, createRefreshToken, sendAccessToken, sendRefreshToken} = require('./tokens.js')
 
 const {fakeDB} = require('./fakeDB.js')
+const {isAuth} = require('./isAuth.js')
 
 //1. Register a user
 //2. Login a user
@@ -30,10 +31,6 @@ server.use(
 // Needed to be able to read body data
 server.use(express.json()); // to support JSON-encoded bodies
 server.use(express.urlencoded({extended: true})); //support URL-encoded bodies
-
-server.listen(process.env.PORT, () => {
-    console.log(`Server listening on port ${process.env.PORT}`)
-})
 
 server.get('/', (req, res) => {
     console.log('hmaisu')
@@ -80,8 +77,34 @@ server.post('/login', async (req, res) => {
         const refreshtoken = createRefreshToken(user.id)
         // 4. Put the refreshtokenin the "database"
         user.refreshtoken = refreshtoken
-        console.log(fakeDB)
+        console.log(fakeDB);
+        // 5. Send token. RefreshToken as a cookie and accesstoken as a regular response
+        sendRefreshToken(res, refreshtoken)
+        sendAccessToken(res, req, Accesstoken)
     } catch(err) {
+        res.send({
+            error: `${err.message}`
+        })
+    }
+})
+
+// 3. Logout a user
+ server.post('/logout', (_req, res) => {
+    res.clearCookie('refreshtoken');
+    return res.send({
+        message: 'logged out'
+    })
+ })
+
+ // 4. Protected route
+ server.post('/protected', async (req, res) => {
+    try {
+        const userId = isAuth(req)
+    } catch (err) {
 
     }
+ })
+
+ server.listen(process.env.PORT, () => {
+    console.log(`Server listening on port ${process.env.PORT}`)
 })
