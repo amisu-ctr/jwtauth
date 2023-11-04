@@ -75,7 +75,7 @@ server.post('/login', async (req, res) => {
         // 3. Create Refresh- and Accesstoken
         const Accesstoken = createAccessToken(user.id)
         const refreshtoken = createRefreshToken(user.id)
-        // 4. Put the refreshtokenin the "database"
+        // 4. Put the refreshtoken in the "database"
         user.refreshtoken = refreshtoken
         console.log(fakeDB);
         // 5. Send token. RefreshToken as a cookie and accesstoken as a regular response
@@ -90,7 +90,7 @@ server.post('/login', async (req, res) => {
 
 // 3. Logout a user
  server.post('/logout', (_req, res) => {
-    res.clearCookie('refreshtoken');
+    res.clearCookie('refreshtoken', {path: '/refresh_token'});
     return res.send({
         message: 'logged out'
     })
@@ -100,9 +100,45 @@ server.post('/login', async (req, res) => {
  server.post('/protected', async (req, res) => {
     try {
         const userId = isAuth(req)
+        if(userId !== null) {
+            res.send({
+                data: 'This is protected data'
+            })
+        }
     } catch (err) {
-
+        res.send({
+            error: `${err.message}`
+        })
     }
+ })
+
+ // 5. Get a new access token with a refresh token
+ server.post('/refresh_token', async(req, res) => {
+    const token = req.cookies.refreshtoken
+    // if we don't have a token in our request
+    if(!token) return res.send({accesstoken: ''});
+    // We have a token in our request
+    let payload = null;
+    try {
+        payload = verify(token, process.env.REFRESH_TOKEN_SECRET);
+        
+    } catch (err) {
+        return res.send({accesstoken: ''})
+    }
+    // Token is valid,check if user exist
+    const user = fakeDB.find(user => user.id === payload.userId)
+    if(!user) return res.send({accesstoken: ''})
+    // User Exist, check if refreshtoken exist on user
+    if (user.refreshtoken !== token) {
+        return res.send({accesstoken: ''})
+    }
+    // Token exist, create new Refresh- and Accesstoken
+    const accesstoken = createAccessToken(user.id);
+    const refreshtoken = createRefreshToken(user.id);
+    user.refreshtoken = refreshtoken;
+    // All good to go, send new refreeshtoken and accesstoken
+    sendRefreshToken(res, refreshtoken);
+    return res.send({accesstoken})
  })
 
  server.listen(process.env.PORT, () => {
