@@ -1,35 +1,41 @@
 /* eslint-disable no-unused-vars */
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState,  } from "react";
 import { UserContext } from "../App";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [user, setUser] = useContext(UserContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    const result = await(await fetch('http://localhost:4000/login', {
+    const result = await (await fetch('http://localhost:4000/login', {
       method: 'POST',
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        'content-Type': 'application/json'
       },
       body: JSON.stringify({
         email,
         password
-      })
+      }),
     })).json()
 
     if (result.accesstoken) {
       setUser({
         accesstoken: result.accesstoken,
-      })
+      });
+      navigate("/")
     } else {
       console.log(result.error)
     }
-
   };
+
+  useEffect(() => {
+    console.log(user)
+  }, [user])
 
   const handleChange = (e) => {
     if(e.currentTarget.name === 'email') {
