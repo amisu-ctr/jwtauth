@@ -23,11 +23,11 @@ const Login = () => {
       }),
     })).json()
 
-    if (result.accesstoken) {
-      setUser({
-        accesstoken: result.accesstoken,
+    if(result.accesstoken) {
+      setUser(() => {
+        return {"accesstoken":result.accesstoken}
       });
-      navigate("/")
+      navigate('/')
     } else {
       console.log(result.error)
     }
