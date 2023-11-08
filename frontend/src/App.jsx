@@ -42,8 +42,10 @@ function App() {
       }
     })).json();
     console.log(result)
-    setUser({
-      accesstoken: result.accesstoken,
+    setUser(() => {
+     return  {
+        "accesstoken": result.accesstoken,
+      }
     });
     setLoading(false); 
   }
@@ -54,7 +56,7 @@ function App() {
 
   return (
    <UserContext.Provider value={[user, setUser, logOutCallback ]}>
-     <div className="App">
+     <div className="app">
       <Navigation  />
       <Routes>
       <Route path="/" element={<Content />} />
